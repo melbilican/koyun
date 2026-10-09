@@ -22,18 +22,19 @@ button.s{background:var(--bg);color:var(--tx);border:1px solid var(--ln);width:a
 .row{display:flex;gap:8px}.row>*{flex:1}.top{display:flex;justify-content:space-between;align-items:center}
 .it{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--ln)}.it:first-of-type{border-top:0}
 .act{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
-nav{display:flex;gap:4px;margin:6px 0 10px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:4px 0;z-index:2}
-nav button{background:var(--card);color:var(--tx);border:1px solid var(--ln);padding:8px 2px;font-size:13px}nav button.on{background:var(--g);color:#fff;border-color:var(--g)}
+nav{display:flex;overflow-x:auto;gap:4px;margin:6px 0 10px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:4px 0;z-index:2}
+nav button{background:var(--card);color:var(--tx);border:1px solid var(--ln);padding:8px 10px;font-size:13px;flex:0 0 auto;white-space:nowrap;width:auto}nav button.on{background:var(--g);color:#fff;border-color:var(--g)}
 .wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;text-align:left;border-top:1px solid var(--ln);font-size:13px}td:last-child,th:last-child{text-align:right}
 #st{font-size:12px;color:var(--mut);margin:0 0 4px}
+@media print{nav,button,.btn,#st,input,select{display:none!important}}
 </style></head><body>
 <div class="top"><h1>🐑 Koyun Muhasebe</h1><button class="s" data-a="undo">↶ Geri al</button></div>
 <p id="st">Yükleniyor…</p>
 <nav id="nav"></nav><div id="main"></div>
 <script>
 const DEF=[["Erkek kuzu satışı (canlı kg)","gelir"],["Damızlık / hayvan satışı","gelir"],["Yün, süt, gübre","gelir"],["Devlet desteği / hibe","gelir"],["Diğer gelir","gelir"],["Kredi çekildi","kredi+"],["Kredi taksiti (anapara)","kredi-"],["Kredi faizi / masraf","gider"],["Hayvan alımı","gider"],["Yem (kesif, saman, yonca)","gider"],["İlaç / aşı / vitamin","gider"],["Veteriner","gider"],["İşçilik","gider"],["Elektrik / su / yakıt","gider"],["Bakım-onarım / ağıl","gider"],["Nakliye","gider"],["Vergi / SGK / sigorta","gider"],["Diğer gider","gider"]];
-let S={e:[],c:DEF.map(x=>({n:x[0],k:x[1]})),a:[],w:[],t:[],fp:0},ref=null,HIST=[],T=0,EE=0,EA=0,FM=0,FY=0,AF="sürüde",PEND=null;
-const TABS=["📊 Özet","🧾 Kayıt","🐑 Hayvan","📅 Takvim","⚙️ Ayar"];
+const S0=()=>({e:[],c:DEF.map(x=>({n:x[0],k:x[1]})),a:[],w:[],t:[],fp:0,cu:[],ch:[],sk:[],sh:[],sg:[],ub:[],rc:[],kr:[],bt:[],rz:[],lr:"",th:""});let S=S0(),ref=null,HIST=[],T=0,EE=0,EA=0,FM=0,FY=0,AF="sürüde",PEND=null;
+const TABS=["📊 Özet","🧾 Kayıt","🐑 Hayvan","🩺 Sağlık","📦 Stok","🤝 Cari","📅 Takvim","📈 Analiz","⚙️ Ayar"];
 const $=i=>document.getElementById(i),V=i=>$(i).value;
 const E=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const p2=n=>String(n).padStart(2,"0"),iso=d=>d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate()),today=()=>iso(new Date());
@@ -55,7 +56,7 @@ async function init(){
 async function save(){try{localStorage.setItem("koyun",JSON.stringify(S))}catch(e){}
  if(ref)try{await ref.set({json:JSON.stringify(S)})}catch(e){status("Buluta kaydedilemedi, cihazda tutuldu.")}}
 function mut(f){HIST.push(JSON.stringify(S));if(HIST.length>30)HIST.shift();f();save();R()}
-function R(){document.querySelectorAll("#nav button").forEach((b,i)=>b.className=i==T?"on":"");$("main").innerHTML=[pO,pE,pA,pT,pS][T]()}
+function R(){document.querySelectorAll("#nav button").forEach((b,i)=>b.className=i==T?"on":"");S.th?document.documentElement.dataset.theme=S.th:delete document.documentElement.dataset.theme;$("main").innerHTML=PG[T]()}
 function filt(){return S.e.filter(x=>{const d=new Date(x.d);return(!FM||d.getMonth()+1==FM)&&(!FY||d.getFullYear()==FY)}).sort((a,b)=>b.d.localeCompare(a.d)||b.id-a.id)}
 function stats(L){return{g:sum(L.filter(x=>kind(x.c)=="gelir")),r:sum(L.filter(x=>kind(x.c)=="gider"))}}
 const loan=()=>sum(S.e.filter(x=>kind(x.c)=="kredi+"))-sum(S.e.filter(x=>kind(x.c)=="kredi-"));
@@ -75,16 +76,16 @@ function pO(){const L=filt(),s=stats(L),by={};L.forEach(x=>by[x.c]=(by[x.c]||0)+
  <div><div class="k">Kâr / Zarar</div><div class="v ${s.g>=s.r?"g":"r"}">${F(s.g-s.r)}</div></div><div><div class="k">Kredi bakiyesi</div><div class="v b">${F(loan())}</div></div>
  <div><div class="k">Sürüdeki hayvan</div><div class="v">${act} baş</div></div></div></div>
  ${soon.length?`<div class="card"><h2>⏰ Yaklaşan / geciken işler</h2>${soon.map(t=>`<div class="sm ${t.d<td?"r":""}">${t.d} · ${E(t.t)}</div>`).join("")}</div>`:""}
- <div class="card"><h2>Son 12 ay (yeşil gelir, kırmızı gider)</h2>${chart()}</div>
+ ${alH()}<div class="card"><h2>Son 12 ay (yeşil gelir, kırmızı gider)</h2>${chart()}</div>
  <div class="card"><h2>Kategori özeti</h2><div class="wrap"><table>${Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<tr><td>${E(n)}</td><td class="${kc(kind(n))}">${F(v)}</td></tr>`).join("")||"<tr><td>Kayıt yok</td></tr>"}</table></div></div>
  <a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(report())}">WhatsApp'ta özet gönder</a><div style="height:12px"></div>`}
-function pE(){const e=S.e.find(x=>x.id==EE)||{d:today(),c:S.c[0].n,an:0,ds:"",q:"",kg:"",p:"",a:""},L=filt().slice(0,100),an=id=>(S.a.find(a=>a.id==id)||{}).k;
+function pE(){const e=S.e.find(x=>x.id==EE)||{d:today(),c:S.c[0].n,an:0,ds:"",q:"",kg:"",p:"",a:""},L=filt().filter(x=>!Q||(x.c+" "+x.ds).toLowerCase().includes(Q.toLowerCase())).slice(0,100),an=id=>(S.a.find(a=>a.id==id)||{}).k;
  return`<div class="card"><h2>${EE?"Kaydı düzenle":"Yeni kayıt"}</h2><div class="row">${inp("d","Tarih","date",e.d)}${sel("c","Kategori",opts(S.c.map(c=>[c.n,c.n]),e.c))}</div>
  ${sel("an","Hayvan (isteğe bağlı; satış girersen hayvan 'satıldı' olur)",opts([[0,"— Sürü geneli —"]].concat(S.a.map(a=>[a.id,a.k+(a.st!="sürüde"?" ("+a.st+")":"")])),e.an))}
  ${inp("ds","Açıklama","text",e.ds,'placeholder="örn. 12 erkek kuzu, Ahmet kasap"')}
  <div class="row">${inp("q","Adet","number",e.q,DX)}${inp("kg","Toplam kg","number",e.kg,DX)}${inp("p","Birim fiyat (TL/kg veya TL/adet)","number",e.p,DX)}</div>${inp("a","Tutar (TL), fiyat girince otomatik","number",e.a,DX)}
  <div class="row" style="margin-top:10px"><button data-a="saveE">Kaydet</button>${EE?'<button class="s" data-a="cancel">Vazgeç</button>':""}</div></div>
- <div class="card"><h2>Kayıtlar (Özet'teki dönem filtresi geçerli)</h2>${L.map(x=>{const k=kind(x.c),d=[x.an?"🐑"+an(x.an):"",x.q?x.q+" adet":"",x.kg?x.kg+" kg":"",x.p?x.p+" ₺":""].filter(Boolean).join(" · ");
+ <div class="card"><h2>Kayıtlar (Özet'teki dönem filtresi geçerli)</h2>${inp("qs","Ara","text",Q,'placeholder="kategori veya açıklama, sonra Enter"')}${L.map(x=>{const k=kind(x.c),d=[x.an?"🐑"+an(x.an):"",x.q?x.q+" adet":"",x.kg?x.kg+" kg":"",x.p?x.p+" ₺":""].filter(Boolean).join(" · ");
  return`<div class="it"><div><b>${E(x.c)}</b><div class="sm">${x.d} ${E(x.ds)}${d?" · "+E(d):""}</div></div><div class="act"><b class="${kc(k)}">${k=="gelir"||k=="kredi+"?"+":"−"}${F(x.a)}</b><div><button class="s" data-a="editE" data-i="${x.id}">Düzenle</button> <button class="s" data-a="delE" data-i="${x.id}">Sil</button></div></div></div>`}).join("")||'<div class="sm">Kayıt yok.</div>'}</div>`}
 function pA(){const e=S.a.find(x=>x.id==EA)||{k:"",s:"E",b:"",m:"",n:1,st:"sürüde",sd:"",ins:"",no:""},co=costs(),td=today();
  const L=S.a.filter(a=>AF=="hepsi"||a.st==AF).sort((a,b)=>String(a.k).localeCompare(b.k,"tr",{numeric:true}));
@@ -97,7 +98,7 @@ function pA(){const e=S.a.find(x=>x.id==EA)||{k:"",s:"E",b:"",m:"",n:1,st:"sür�
  <div class="sm">Ortak giderler (yem, işçilik vb.) hayvanlara gün sayısıyla paylaştırılır: tahmini maliyet.</div>${L.map(a=>{const c=co[a.id],n=a.n||1,w=wts(a),lw=w.length?w[w.length-1].kg:0,gka=w.length>1?(lw-w[0].kg)/Math.max(1,days(w[0].d,w[w.length-1].d))*1000:0,age=a.b?days(a.b,a.sd||td):0;
  const pr=a.st!="sürüde"&&c.inc?c.inc-c.cost:(a.st=="sürüde"&&lw&&S.fp?lw*S.fp*n-c.cost:null);
  return`<div class="it"><div><b>${E(a.k)}</b> ${a.s=="E"?"♂":"♀"}${n>1?" ×"+n:""} <span class="sm">${a.st}</span><div class="sm">${a.b?"Yaş: "+(age<60?age+" gün":Math.round(age/30.4)+" ay")+" · ":""}${lw?"Son tartı: "+lw+" kg":"Tartı yok"}${gka?" · "+Math.round(gka)+" g/gün":""}${a.m?" · Ana: "+E(a.m):""}</div>
- <div class="sm">Maliyet/baş: ${F(c.cost/n)} (doğrudan ${F(c.dir/n)}, ortak pay ${F(c.sh/n)})</div>${pr!==null?`<div class="sm ${pr>=0?"g":"r"}">${a.st=="sürüde"?"Tahmini değer ile kâr":"Gerçekleşen kâr"}: ${F(pr)} (baş: ${F(pr/n)})</div>`:""}${a.ins&&a.st=="sürüde"?`<div class="sm">Tahmini doğum: ${addD(a.ins,150)}</div>`:""}${a.no?`<div class="sm">${E(a.no)}</div>`:""}</div>
+ <div class="sm">Maliyet/baş: ${F(c.cost/n)} (doğrudan ${F(c.dir/n)}, ortak pay ${F(c.sh/n)})</div>${fc(a)}${pr!==null?`<div class="sm ${pr>=0?"g":"r"}">${a.st=="sürüde"?"Tahmini değer ile kâr":"Gerçekleşen kâr"}: ${F(pr)} (baş: ${F(pr/n)})</div>`:""}${a.ins&&a.st=="sürüde"?`<div class="sm">Tahmini doğum: ${addD(a.ins,150)}</div>`:""}${a.no?`<div class="sm">${E(a.no)}</div>`:""}</div>
  <div class="act"><button class="s" data-a="editA" data-i="${a.id}">Düzenle</button><button class="s" data-a="delA" data-i="${a.id}">Sil</button></div></div>`}).join("")||'<div class="sm">Hayvan yok.</div>'}</div>`}
 function pT(){const td=today(),L=S.t.slice().sort((a,b)=>(a.x-b.x)||a.d.localeCompare(b.d)),P=["Şap aşısı","Enterotoksemi aşısı","İç-dış parazit ilacı","Tırnak bakımı","Kırkım","Tohumlama / koç katımı","Sütten kesme","Toplu tartı","Kredi taksiti"];
  const dg=S.a.filter(a=>a.ins&&a.st=="sürüde").sort((a,b)=>addD(a.ins,150).localeCompare(addD(b.ins,150)));
@@ -108,16 +109,102 @@ function pT(){const td=today(),L=S.t.slice().sort((a,b)=>(a.x-b.x)||a.d.localeCo
 function pS(){const K=[["gider","Gider"],["gelir","Gelir"],["kredi+","Kredi çekildi"],["kredi-","Kredi anapara"]];
  return`<div class="card"><h2>Kategoriler (sen yönet)</h2>${S.c.map((c,i)=>`<div class="row" style="margin-bottom:6px"><input data-cn="${i}" value="${E(c.n)}"><select data-ck="${i}" style="max-width:120px">${opts(K,c.k)}</select><button class="s" data-a="delC" data-i="${i}">Sil</button></div>`).join("")}
  <div class="row"><input id="nc" placeholder="Yeni kategori"><select id="nk">${opts(K,"gider")}</select><button class="s" data-a="addC">Ekle</button></div></div>
- <div class="card"><h2>Canlı kg fiyatı</h2><div class="sm">Sürüdeki hayvanların tahmini değerini hesaplamak için.</div><div class="row">${inp("fp","TL/kg","number",S.fp||"",DX)}<button data-a="saveFP" style="align-self:end">Kaydet</button></div></div>
+ ${gm("rc")}${gm("bt")}<div class="card"><h2>Tema</h2>${sel("th","",opts([["","Otomatik"],["light","Açık"],["dark","Koyu"]],S.th||""))}</div><div class="card"><h2>Canlı kg fiyatı</h2><div class="sm">Sürüdeki hayvanların tahmini değerini hesaplamak için.</div><div class="row">${inp("fp","TL/kg","number",S.fp||"",DX)}<button data-a="saveFP" style="align-self:end">Kaydet</button></div></div>
  <div class="card"><h2>Kredi hesaplayıcı</h2><div class="row">${inp("la","Tutar","number","",DX)}${inp("ly","Yıllık faiz %","number","",DX)}${inp("lm","Vade (ay)","number","",DX)}</div><div id="lr" class="sm" style="margin-top:6px">Vergi ve masraflar hariç, eşit taksit.</div></div>
  <div class="card"><h2>Yedek ve paylaşım</h2><div class="row"><button class="s" data-a="expJ">Yedeği indir (JSON)</button><button class="s" data-a="expC">Excel için CSV</button></div>
  <label>Yedekten geri yükle (mevcut veri değişir, Geri al ile dönebilirsin)</label><input type="file" id="fi" accept=".json">
  <div style="margin-top:8px"><a class="btn" target="_blank" rel="noopener" id="wl">Uygulama linkini WhatsApp'ta gönder</a></div>
  <div class="sm" style="margin-top:6px">iPhone: linki Safari'de aç, Paylaş > Ana Ekrana Ekle. Android: Chrome menüsü > Ana ekrana ekle.</div>
  <div style="margin-top:10px"><button class="s" data-a="wipe">Tüm verileri sil</button></div></div>`}
+let Q="",GE=null;
+const CT=["Alacak doğdu (veresiye sattım)","Tahsilat (para aldım)","Borç doğdu (veresiye aldım)","Ödeme (para verdim)"],hk=id=>(S.a.find(a=>a.id==id)||{}).k||"?";
+const cb=id=>S.ch.filter(x=>x.cu==id).reduce((q,x)=>q+([1,-1,-1,1][CT.indexOf(x.ty)]||0)*x.a,0);
+const sq=id=>S.sh.filter(x=>x.sk==id).reduce((q,x)=>q+(x.ty=="Giriş"?1:-1)*x.q,0);
+const addM=(d,n)=>{const x=new Date(d);x.setMonth(x.getMonth()+n);return iso(x)};
+function li(x){const r=(x.y||0)/1200,m=x.m||1,pay=r?x.a*r/(1-Math.pow(1+r,-m)):x.a/m,td=today();let n=0;while(n<m&&addM(x.d,n)<=td)n++;let bal=x.a;for(let i=0;i<n;i++)bal-=pay-bal*r;return{pay,n,m,bal:Math.max(0,bal),next:n<m?addM(x.d,n):null,fa:pay*m-x.a}}
+const GR=["Erkek kuzu","Dişi kuzu","Yetişkin koyun","Gebe koyun","Tüm sürü"];
+const ac2=id=>{const g=S.sh.filter(x=>x.sk==id&&x.ty=="Giriş"&&x.a>0),q=g.reduce((s,x)=>s+x.q,0);return q?g.reduce((s,x)=>s+x.a,0)/q:0};
+const grp=a=>{const td=today(),ag=a.b?days(a.b,td):999;if(ag<180)return a.s=="E"?"Erkek kuzu":"Dişi kuzu";if(a.s=="D"&&a.ins&&a.ins<=td&&addD(a.ins,150)>=td)return"Gebe koyun";return"Yetişkin koyun"};
+const heads=g=>S.a.filter(a=>a.st=="sürüde"&&(g=="Tüm sürü"||grp(a)==g)).reduce((q,a)=>q+(a.n||1),0);
+const dc=g=>S.rz.filter(r=>r.g==g||r.g=="Tüm sürü").reduce((q,r)=>q+r.q*ac2(r.sk),0);
+const gu=x=>x.gk||S.rz.filter(r=>r.sk==x.id).reduce((q,r)=>q+r.q*heads(r.g),0);
+const fc=a=>{const c=dc(grp(a));if(!c)return"";const w=wts(a),g=w.length>1?(w[w.length-1].kg-w[0].kg)/Math.max(1,days(w[0].d,w[w.length-1].d)):0;return`<div class="sm">Yem (${grp(a)}): günlük ${F(c)}/baş, aylık ${F(c*30)}${g>0?" · 1 kg artışa yem "+F(c/g):""}</div>`};
+function fa(){const rows=GR.slice(0,4).map(g=>[g,heads(g),dc(g)]),tot=rows.reduce((q,r)=>q+r[1]*r[2],0),n=rows.reduce((q,r)=>q+r[1],0);
+ return S.rz.length?`<div class="card"><h2>🌾 Yem maliyeti</h2><div class="wrap"><table><tr><th>Grup</th><th>Baş</th><th>Günlük/baş</th></tr>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${F(r[2])}</td></tr>`).join("")}</table></div><div class="sm" style="margin-top:6px">Sürü günlük yem: ${F(tot)} · aylık ${F(tot*30)} · baş başı günlük ort. ${n?F(tot/n):"-"}</div></div>`:`<div class="card"><div class="sm">Yem maliyeti için Stok sekmesinde alış bedelli giriş ve rasyon ekle.</div></div>`}
+const KD={
+cu:{t:"🤝 Cari kişi / firma",req:"n",f:[["n","Ad","text"],["ty","Tür","s",["Müşteri","Kasap / tüccar","Yem tedarikçisi","Veteriner","İşçi","Diğer"]],["no","Telefon / not","text"]],
+ r:x=>{const b=cb(x.id);return`<b>${E(x.n)}</b> <span class="sm">${x.ty}</span><div class="sm">${E(x.no)}</div><div class="${b>0?"g":b<0?"r":"sm"}">${b>0?"Alacağın: "+F(b):b<0?"Borcun: "+F(-b):"Bakiye sıfır"}</div>`}},
+ch:{t:"Cari hareket (veresiye, tahsilat, ödeme)",req:"a",f:[["cu","Kişi / firma","@cu"],["d","Tarih","date"],["ty","İşlem","s",CT],["a","Tutar (TL)","number"],["kc","Kasaya da yaz: tahsilat/ödeme ise kategori seç","@c0"],["ds","Açıklama","text"]],
+ pre:o=>{const i=CT.indexOf(o.ty);if(o.kc&&(i==1||i==3))S.e.push({id:Date.now()+1,d:o.d,c:o.kc,ds:((S.cu.find(c=>c.id==o.cu)||{}).n||"")+(o.ds?" · "+o.ds:""),a:o.a,q:0,kg:0,p:0,an:0,cr:o.id})},
+ r:x=>`<b>${E((S.cu.find(c=>c.id==x.cu)||{}).n||"?")}</b> <span class="sm">${x.d} · ${x.ty}</span><div class="sm">${E(x.ds)}</div><b>${F(x.a)}</b>`},
+kr:{t:"🏦 Krediler (taksit takibi)",req:"a",f:[["n","Kredi adı / banka","text"],["a","Çekilen tutar","number"],["y","Yıllık faiz %","number"],["m","Vade (ay)","number"],["d","İlk taksit tarihi","date"]],
+ r:x=>{const i=li(x);return`<b>${E(x.n)}</b> <span class="sm">${F(x.a)} · %${x.y} · ${x.m} ay</span><div>Aylık taksit ${F(i.pay)} · ödenen ${i.n}/${i.m}</div><div class="sm">Kalan anapara ${F(i.bal)} · ${i.next?"sonraki taksit "+i.next:"bitti"} · toplam faiz ${F(i.fa)} (vergi/masraf hariç)</div>`}},
+sk:{t:"📦 Stok ürünü (yem, ilaç, aşı, malzeme)",req:"n",f:[["n","Ürün","text"],["u","Birim","s",["kg","çuval","balya","adet","litre","doz","kutu"]],["min","Kritik seviye","number"],["gk","Günlük kullanım","number"]],
+ r:x=>{const m=sq(x.id),g=gu(x)?Math.floor(m/gu(x)):null,bad=(x.min&&m<=x.min)||(g!==null&&g<7);return`<b>${E(x.n)}</b><div class="${bad?"r":"g"}">Mevcut: ${Math.round(m*100)/100} ${x.u}${g!==null?" · yaklaşık "+g+" gün yeter":""}${bad?" ⚠️":""}</div>`}},
+sh:{t:"Stok hareketi (giriş / çıkış)",req:"q",f:[["sk","Ürün","@sk"],["d","Tarih","date"],["ty","Hareket","s",["Giriş","Çıkış"]],["q","Miktar","number"],["a","Alış bedeli TL (giriş ise)","number"],["kc","Kasaya gider yaz (kategori)","@c0"],["skt","Son kullanma tarihi (varsa)","date0"],["ds","Açıklama","text"]],
+ pre:o=>{if(o.ty=="Giriş"&&o.a>0&&o.kc)S.e.push({id:Date.now()+1,d:o.d,c:o.kc,ds:"Stok alımı: "+((S.sk.find(s=>s.id==o.sk)||{}).n||"")+" "+o.q,a:o.a,q:0,kg:0,p:0,an:0,cr:o.id})},
+ r:x=>{const p=S.sk.find(s=>s.id==x.sk)||{};return`<b>${E(p.n||"?")}</b> <span class="${x.ty=="Giriş"?"g":"r"}">${x.ty} ${x.q} ${p.u||""}</span><div class="sm">${x.d} ${E(x.ds)}${x.skt?" · SKT "+x.skt:""}${x.ty=="Giriş"&&x.a?" · "+F(x.a):""}${x.ty=="Çıkış"&&ac2(x.sk)?" · değeri "+F(x.q*ac2(x.sk)):""}</div>`}},
+sg:{t:"🩺 Sağlık kaydı (aşı, tedavi, ilaç)",req:"an",f:[["an","Hayvan","@a"],["d","Tarih","date"],["ty","Tür","s",["Aşı","Tedavi","İç/dış parazit","Muayene / kontrol","Doğum müdahalesi","Tırnak / kırkım","Diğer"]],["ds","İlaç / açıklama","text"],["bk","Bekleme süresi (gün, ilaç prospektüsüne bak)","number"]],
+ r:x=>{const e=x.bk?addD(x.d,x.bk):"";return`<b>${E(hk(x.an))}</b> <span class="sm">${x.d} · ${x.ty}</span><div class="sm">${E(x.ds)}</div>${e?`<div class="${e>=today()?"r":"sm"}">Bekleme bitişi: ${e}${e>=today()?" (kesim/satış için bekle)":""}</div>`:""}`}},
+ub:{t:"🍼 Üreme kaydı (tohumlama, doğum)",req:"an",f:[["an","Dişi hayvan","@a"],["d","Tarih","date"],["ty","Olay","s",["Tohumlama / koç katımı","Doğum","Düşük","Ölü doğum","Boş çıktı (gebe değil)"]],["n","Doğan kuzu sayısı","number"],["ds","Not","text"]],
+ pre:o=>{const a=S.a.find(x=>x.id==o.an);if(a)a.ins=o.ty.startsWith("Tohum")?o.d:""},
+ r:x=>`<b>${E(hk(x.an))}</b> <span class="sm">${x.d} · ${x.ty}${x.n?" · "+x.n+" kuzu":""}</span><div class="sm">${E(x.ds)}</div>`},
+rc:{t:"🔁 Tekrarlayan giderler (kira, maaş, elektrik...)",req:"a",f:[["c","Kategori","@c"],["ds","Açıklama","text"],["a","Aylık tutar","number"],["g","Ayın kaçı (1-28)","number"]],
+ x:()=>`<button class="s" data-a="rcrun" style="margin-bottom:8px">Bu ayın tekrarlayan giderlerini kayda işle</button>`,
+ r:x=>`<b>${E(x.ds||x.c)}</b> <span class="sm">${E(x.c)} · her ayın ${x.g||1}. günü</span><div>${F(x.a)}</div>`},
+rz:{t:"🌾 Rasyon (baş başı günlük yem)",req:"q",f:[["g","Hayvan grubu","s",GR],["sk","Yem / ürün","@sk"],["q","Günlük miktar (baş başı)","number"]],
+ x:()=>`<button class="s" data-a="rzrun" style="margin-bottom:8px">Yemlemeyi stoktan düş (bugüne kadar)</button>`,
+ r:x=>{const p=S.sk.find(s=>s.id==x.sk)||{};return`<b>${x.g}</b>: ${E(p.n||"?")} ${x.q} ${p.u||""}/gün<div class="sm">Baş başı günlük ${F(x.q*ac2(x.sk))} · ${heads(x.g)} baş</div>`}},
+bt:{t:"🎯 Aylık bütçe limiti",req:"l",f:[["c","Kategori","@c"],["l","Aylık limit (TL)","number"]],
+ r:b=>{const s=sum(S.e.filter(x=>x.c==b.c&&x.d.slice(0,7)==today().slice(0,7))),o=s>b.l;return`<b>${E(b.c)}</b> <span class="sm">limit ${F(b.l)}</span><div class="${o?"r":"g"}">Bu ay: ${F(s)} (%${Math.round(s/b.l*100)})${o?" ⚠️ aşıldı":""}</div>`}}};
+function gm(k){const D=KD[k],ed=GE&&GE.k==k?S[k].find(x=>x.id==GE.i):null;
+ const fl=D.f.map(([f,l,t,o])=>{const id="g_"+k+"_"+f,v=ed?ed[f]:(t=="date"?today():"");if(t=="text"||t=="number"||t=="date"||t=="date0")return inp(id,l,t=="number"?"number":t=="text"?"text":"date",v??"",t=="number"?DX:"");
+  const op=t=="s"?o.map(x=>[x,x]):t=="@a"?S.a.map(a=>[a.id,a.k]):t=="@cu"?S.cu.map(c=>[c.id,c.n]):t=="@sk"?S.sk.map(c=>[c.id,c.n]):t=="@c0"?[["","— kasaya yazma —"]].concat(S.c.map(c=>[c.n,c.n])):S.c.map(c=>[c.n,c.n]);return sel(id,l,opts(op,v))}).join("");
+ const L=S[k].slice().sort((a,b)=>(b.d||"").localeCompare(a.d||"")||b.id-a.id);
+ return`<div class="card"><h2>${D.t}${ed?" (düzenleniyor)":""}</h2>${D.x?D.x():""}<div class="grid">${fl}</div><div class="row" style="margin-top:10px"><button data-a="gadd" data-k="${k}">${ed?"Güncelle":"Ekle"}</button>${ed?`<button class="s" data-a="gcan" data-k="${k}">Vazgeç</button>`:""}</div>
+ <div style="margin-top:8px">${L.map(x=>`<div class="it"><div>${D.r(x)}</div><div class="act"><button class="s" data-a="gedit" data-k="${k}" data-i="${x.id}">Düzenle</button><button class="s" data-a="gdel" data-k="${k}" data-i="${x.id}">Sil</button></div></div>`).join("")||'<div class="sm">Kayıt yok.</div>'}</div></div>`}
+function gHandle(a,b,i){const k=b.dataset.k;
+ if(a=="print"){window.print();return true}
+ if(a=="gadd"){const D=KD[k],o={id:GE&&GE.k==k?GE.i:Date.now()};D.f.forEach(([f,l,t])=>{let v=V("g_"+k+"_"+f);if(t=="number"||(t[0]=="@"&&t!="@c"&&t!="@c0"))v=+v||0;o[f]=v});
+  if(!o[D.req]){status("Zorunlu alanı doldur (tutar/ad/hayvan).");return true}
+  mut(()=>{S.e=S.e.filter(x=>x.cr!=o.id);if(D.pre)D.pre(o);S[k]=GE&&GE.k==k?S[k].map(x=>x.id==o.id?o:x):S[k].concat(o);GE=null});return true}
+ if(a=="gedit"){GE={k,i};R();return true}
+ if(a=="gcan"){GE=null;R();return true}
+ if(a=="gdel"){if(two(b,"g"+k+i))mut(()=>{S[k]=S[k].filter(x=>x.id!=i);S.e=S.e.filter(x=>x.cr!=i)});return true}
+ if(a=="rzrun"){const td=today();let st=S.lr?addD(S.lr,1):td,n=0;if(days(st,td)>31)st=addD(td,-30);mut(()=>{for(let d=st;d<=td;d=addD(d,1))S.rz.forEach(r=>{const h=heads(r.g),q=r.q*h,key=r.id+d;if(h&&q>0&&!S.sh.some(x=>x.rz==key))S.sh.push({id:Date.now()+n++,sk:r.sk,d,ty:"Çıkış",q,skt:"",ds:"Otomatik yemleme: "+r.g,a:0,kc:"",rz:key})});S.lr=td});status(n+" yemleme çıkışı stoktan düşüldü.");return true}
+ if(a=="rcrun"){const ym=today().slice(0,7);let n=0;mut(()=>S.rc.forEach(r=>{const key=r.id+ym;if(!S.e.some(x=>x.rc==key)){S.e.push({id:Date.now()+n++,d:ym+"-"+p2(Math.min(r.g||1,28)),c:r.c,ds:r.ds,a:r.a,q:0,kg:0,p:0,an:0,rc:key})}}));status(n?n+" tekrarlayan gider kayda işlendi.":"Bu ayın tekrarlayan giderleri zaten işlenmiş.");return true}
+ return false}
+function alH(){const td=today(),A=[],mo=td.slice(0,7);
+ S.kr.forEach(x=>{const i=li(x);if(i.next&&i.next<=addD(td,7))A.push(["r",`Kredi taksiti ${i.next}: ${E(x.n)} ${F(i.pay)}`])});
+ S.sk.forEach(x=>{const m=sq(x.id),g=gu(x)?m/gu(x):99;if((x.min&&m<=x.min)||g<7)A.push(["r",`Stok azalıyor: ${E(x.n)} (${Math.round(m)} ${x.u})`])});
+ S.sh.forEach(x=>{if(x.ty=="Giriş"&&x.skt&&x.skt<=addD(td,30)&&sq(x.sk)>0)A.push([x.skt<td?"r":"b",`Son kullanma: ${E((S.sk.find(s=>s.id==x.sk)||{}).n||"?")} ${x.skt}`])});
+ S.sg.forEach(x=>{if(x.bk&&addD(x.d,x.bk)>=td)A.push(["b",`Bekleme süresinde: ${E(hk(x.an))} (${addD(x.d,x.bk)} tarihine kadar)`])});
+ S.bt.forEach(b=>{const s=sum(S.e.filter(x=>x.c==b.c&&x.d.slice(0,7)==mo));if(b.l&&s>b.l)A.push(["r",`Bütçe aşıldı: ${E(b.c)} ${F(s)} / ${F(b.l)}`])});
+ S.a.forEach(a=>{if(a.ins&&a.st=="sürüde"){const d=addD(a.ins,150);if(d>=td&&d<=addD(td,14))A.push(["b",`Doğum yaklaşıyor: ${E(a.k)} (${d})`])}});
+ const al=S.cu.reduce((q,c)=>q+Math.max(0,cb(c.id)),0),bo=S.cu.reduce((q,c)=>q+Math.max(0,-cb(c.id)),0);if(al||bo)A.push(["b",`Cari: alacağın ${F(al)}, borcun ${F(bo)}`]);
+ return A.length?`<div class="card"><h2>⚠️ Uyarılar ve bilgiler</h2>${A.map(a=>`<div class="sm ${a[0]}">${a[1]}</div>`).join("")}</div>`:""}
+function scen(){const b=+V("sn_b"),k=+V("sn_k"),p=+V("sn_p"),c=+V("sn_c"),g=b*k*p,m=b*c;$("sn_r").textContent=b?`Tahmini gelir ${F(g)} · maliyet ${F(m)} · kâr ${F(g-m)} (baş başı ${F(g/b-c)})`:""}
+function pH(){const dg=S.ub.filter(x=>x.ty=="Doğum"),kz=dg.reduce((q,x)=>q+(x.n||0),0);return`<div class="card"><div class="sm">Doğum: ${dg.length} · doğan kuzu: ${kz} · doğum başına ${dg.length?(kz/dg.length).toFixed(2):"-"} kuzu. Tohumlama girince hayvanın tahmini doğum günü Takvim'e düşer.</div></div>`+gm("sg")+gm("ub")}
+const pK=()=>`<div class="card"><div class="sm">Giriş/çıkış yazdıkça mevcut stok ve "kaç gün yeter" hesaplanır. Giriş kaydına alış bedeli ve kategori yazarsan kasaya gider de otomatik düşer; çıkışlar gider yazmaz, sadece yem maliyetini hesaplar.</div></div>`+gm("sk")+gm("rz")+gm("sh"),pC=()=>`<div class="card"><div class="sm">Veresiye alacak-borç takibi. Tahsilat veya ödeme girerken kategori seçersen kasaya gelir/gider de otomatik yazılır. Veresiye satış/alış (alacak/borç doğdu) para hareketi olmadığı için kasaya yazılmaz.</div></div>`+gm("cu")+gm("ch")+gm("kr");
+function pN(){const L=S.e,s=stats(L),mo=today().slice(0,7),sat=L.filter(x=>kind(x.c)=="gelir"&&x.kg),skg=sat.reduce((q,x)=>q+x.kg,0),sb=sat.reduce((q,x)=>q+(x.q||0),0),sg=sum(sat),
+ cs=re=>sum(L.filter(x=>kind(x.c)=="gider"&&re.test(x.c))),pc=n=>s.r?Math.round(n/s.r*100)+"%":"-",tot=S.a.reduce((q,a)=>q+(a.n||1),0),ol=S.a.filter(a=>a.st=="öldü").reduce((q,a)=>q+(a.n||1),0),ac=S.a.filter(a=>a.st=="sürüde"),
+ nn=x=>ac.filter(a=>a.s==x).reduce((q,a)=>q+(a.n||1),0),dg=S.ub.filter(x=>x.ty=="Doğum"),kz=dg.reduce((q,x)=>q+(x.n||0),0),
+ gk=S.a.map(a=>{const w=wts(a);return w.length>1?(w[w.length-1].kg-w[0].kg)/Math.max(1,days(w[0].d,w[w.length-1].d))*1000:null}).filter(v=>v!==null),ki=S.kr.map(li),
+ mn=L.filter(x=>x.d.slice(0,7)==mo),nk=sum(mn.filter(x=>["gelir","kredi+"].includes(kind(x.c))))-sum(mn.filter(x=>["gider","kredi-"].includes(kind(x.c)))),
+ al=S.cu.reduce((q,c)=>q+Math.max(0,cb(c.id)),0),bo=S.cu.reduce((q,c)=>q+Math.max(0,-cb(c.id)),0),ys=[...new Set(L.map(x=>x.d.slice(0,4)))].sort().reverse();
+ const R2=[["Toplam gelir",F(s.g)],["Toplam gider",F(s.r)],["Kâr / zarar",F(s.g-s.r)],["Kâr marjı",s.g?Math.round((s.g-s.r)/s.g*100)+"%":"-"],["Bu ay net nakit akışı",F(nk)],
+ ["Kg'lı satışlar",sb+" baş / "+Math.round(skg)+" kg"],["Ortalama satış fiyatı",skg?F(sg/skg)+"/kg":"-"],["Ortalama canlı ağırlık",sb&&skg?Math.round(skg/sb)+" kg/baş":"-"],["Baş başı ortalama satış",sb?F(sg/sb):"-"],
+ ["Başabaş fiyatı (tüm gider ÷ satılan kg)",skg?F(s.r/skg)+"/kg":"-"],["Yem payı",pc(cs(/yem/i))],["İlaç, aşı, veteriner payı",pc(cs(/ilaç|aşı|veteriner/i))],["İşçilik payı",pc(cs(/işçilik/i))],["Kredi faizi payı",pc(cs(/faiz/i))],
+ ["Sürüdeki hayvan",nn("E")+nn("D")+" baş (♂"+nn("E")+" ♀"+nn("D")+")"],["Ölüm oranı",tot?Math.round(ol/tot*100)+"%":"-"],["Doğumlar",dg.length+" doğum / "+kz+" kuzu"],["Doğum başına kuzu",dg.length?(kz/dg.length).toFixed(2):"-"],
+ ["Ort. günlük kilo artışı",gk.length?Math.round(gk.reduce((q,v)=>q+v,0)/gk.length)+" g/gün":"-"],["Toplam alacak",F(al)],["Toplam borç",F(bo)],["Kalan kredi anaparası",F(ki.reduce((q,i)=>q+i.bal,0))],["Aylık kredi taksiti",F(ki.reduce((q,i)=>q+(i.n<i.m?i.pay:0),0))]];
+ return`<div class="card"><h2>Göstergeler</h2><div class="wrap"><table>${R2.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table></div></div>
+ ${fa()}<div class="card"><h2>Yıllara göre</h2><div class="wrap"><table><tr><th>Yıl</th><th>Gelir</th><th>Gider</th><th>Kâr</th></tr>${ys.map(y=>{const l=L.filter(x=>x.d.slice(0,4)==y),t=stats(l);return`<tr><td>${y}</td><td class="g">${F(t.g)}</td><td class="r">${F(t.r)}</td><td>${F(t.g-t.r)}</td></tr>`}).join("")}</table></div></div>
+ <div class="card"><h2>Senaryo hesaplayıcı (kuzu satışı)</h2><div class="grid">${inp("sn_b","Kaç baş","number","",DX)}${inp("sn_k","Ort. canlı kg","number","",DX)}${inp("sn_p","TL/kg","number",S.fp||"",DX)}${inp("sn_c","Baş başı maliyet","number","",DX)}</div><div id="sn_r" class="sm" style="margin-top:6px"></div></div>
+ <button class="s" data-a="print">Yazdır / PDF olarak kaydet</button><div style="height:12px"></div>`}
+const PG=[pO,pE,pA,pH,pK,pC,pT,pN,pS];
 const two=(b,k)=>{if(PEND!==k){PEND=k;b.textContent="Emin misin?";return false}PEND=null;return true};
-document.addEventListener("click",e=>{const t=e.target.closest("[data-t]");if(t){T=+t.dataset.t;R();if(T==4)$("wl").href="https://wa.me/?text="+encodeURIComponent("Koyun Muhasebe uygulaması: "+location.href);return}
- const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,i=+b.dataset.i;
+document.addEventListener("click",e=>{const t=e.target.closest("[data-t]");if(t){T=+t.dataset.t;R();if(T==8)$("wl").href="https://wa.me/?text="+encodeURIComponent("Koyun Muhasebe uygulaması: "+location.href);return}
+ const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,i=+b.dataset.i;if(gHandle(a,b,i))return;
  if(a=="undo"){if(HIST.length){S=JSON.parse(HIST.pop());save();R();status("Son işlem geri alındı.")}else status("Geri alınacak işlem yok.");return}
  if(a=="cancel"){EE=EA=0;R();return}
  if(a=="saveE"){const am=+V("a");if(!am)return status("Tutar gir.");const o={id:EE||Date.now(),d:V("d"),c:V("c"),ds:V("ds"),a:am,q:+V("q")||0,kg:+V("kg")||0,p:+V("p")||0,an:+V("an")||0};
@@ -127,7 +214,7 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-t]");if(t)
  if(a=="saveA"){if(!V("ak").trim())return status("Küpe no / ad gir.");const o={id:EA||Date.now(),k:V("ak").trim(),s:V("as"),n:+V("an2")||1,b:V("ab"),m:V("am"),ins:V("ai"),st:V("ast"),sd:V("asd"),no:V("ao")};if(o.st!="sürüde"&&!o.sd)o.sd=today();
   mut(()=>{S.a=EA?S.a.map(x=>x.id==EA?o:x):S.a.concat(o);EA=0});return}
  if(a=="editA"){EA=i;R();scrollTo(0,0);return}
- if(a=="delA"){if(two(b,"a"+i))mut(()=>{S.a=S.a.filter(x=>x.id!=i);S.w=S.w.filter(x=>x.an!=i);S.e.forEach(x=>{if(x.an==i)x.an=0})});return}
+ if(a=="delA"){if(two(b,"a"+i))mut(()=>{S.a=S.a.filter(x=>x.id!=i);S.w=S.w.filter(x=>x.an!=i);S.sg=S.sg.filter(x=>x.an!=i);S.ub=S.ub.filter(x=>x.an!=i);S.e.forEach(x=>{if(x.an==i)x.an=0})});return}
  if(a=="saveW"){if(!+V("wk")||!V("wa"))return status("Hayvan ve kg gir.");mut(()=>S.w.push({id:Date.now(),an:+V("wa"),d:V("wd"),kg:+V("wk")}));return}
  if(a=="saveT"){if(!V("tt").trim())return;mut(()=>S.t.push({id:Date.now(),d:V("td"),t:V("tt").trim(),r:+V("tr")||0,x:0}));return}
  if(a=="doneT"){mut(()=>{const t=S.t.find(x=>x.id==i);t.x=1;if(t.r)S.t.push({id:Date.now(),d:addD(today(),t.r),t:t.t,r:t.r,x:0})});return}
@@ -135,21 +222,21 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-t]");if(t)
  if(a=="addC"){const n=V("nc").trim();if(!n||S.c.some(c=>c.n==n))return;mut(()=>S.c.push({n,k:V("nk")}));return}
  if(a=="delC"){if(S.e.some(x=>x.c==S.c[i].n))return status("Bu kategoride kayıt var, silinemez. İstersen adını değiştir.");if(two(b,"c"+i))mut(()=>S.c.splice(i,1));return}
  if(a=="saveFP"){mut(()=>S.fp=+V("fp")||0);return}
- if(a=="wipe"){if(two(b,"w"))mut(()=>{S={e:[],c:DEF.map(x=>({n:x[0],k:x[1]})),a:[],w:[],t:[],fp:0}});return}
+ if(a=="wipe"){if(two(b,"w"))mut(()=>{S=S0()});return}
  if(a=="expJ")return dl("koyun-yedek-"+today()+".json",JSON.stringify(S));
  if(a=="expC"){const rows=[["Tarih","Kategori","Tür","Hayvan","Açıklama","Adet","Kg","Birim fiyat","Tutar"]].concat(filt().map(x=>[x.d,x.c,kind(x.c),(S.a.find(h=>h.id==x.an)||{}).k||"",x.ds,x.q,x.kg,x.p,x.a]));
   return dl("koyun-muhasebe.csv","\ufeff"+rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(";")).join("\n"))}});
 async function dl(f,d){let m=null;try{m=await window.claude?.use("downloads")}catch(e){}
  if(m){try{await m.save({filename:f,data:d})}catch(e){status("İndirme iptal edildi.")}return}
  try{const u=URL.createObjectURL(new Blob([d],{type:"application/octet-stream"})),a=document.createElement("a");a.href=u;a.download=f;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1e4)}catch(e){status("İndirme açılamadı.")}}
-document.addEventListener("change",e=>{const x=e.target;
+document.addEventListener("change",e=>{const x=e.target;if(x.id=="th"){mut2(()=>S.th=x.value);R();return}if(x.id=="qs"){Q=x.value;R();return}
  if(x.id=="fm"||x.id=="fy"){FM=+V("fm");FY=+V("fy");R();return}
  if(x.id=="af"){AF=x.value;R();return}
  if(x.dataset.cn!==undefined){const i=+x.dataset.cn,n=x.value.trim(),o=S.c[i].n;if(!n||S.c.some((c,j)=>j!=i&&c.n==n)){x.value=o;return}mut2(()=>{S.c[i].n=n;S.e.forEach(y=>{if(y.c==o)y.c=n})});return}
  if(x.dataset.ck!==undefined){mut2(()=>S.c[+x.dataset.ck].k=x.value);return}
- if(x.id=="fi"&&x.files[0]){const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(!Array.isArray(j.e)||!Array.isArray(j.c))throw 0;mut(()=>{S=Object.assign({e:[],c:[],a:[],w:[],t:[],fp:0},j)});status("Yedek yüklendi.")}catch(_){status("Geçersiz yedek dosyası.")}};r.readAsText(x.files[0])}});
+ if(x.id=="fi"&&x.files[0]){const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(!Array.isArray(j.e)||!Array.isArray(j.c))throw 0;mut(()=>{S=Object.assign(S0(),j)});status("Yedek yüklendi.")}catch(_){status("Geçersiz yedek dosyası.")}};r.readAsText(x.files[0])}});
 function mut2(f){HIST.push(JSON.stringify(S));f();save()}
-document.addEventListener("input",e=>{const i=e.target.id;
+document.addEventListener("input",e=>{const i=e.target.id;if(i&&i.startsWith("sn_"))scen();
  if(["q","kg","p"].includes(i)){const p=+V("p");if(p){const u=+V("kg")||+V("q")||1;$("a").value=Math.round(u*p*100)/100}}
  if(["la","ly","lm"].includes(i)){const a=+V("la"),n=+V("lm"),r=(+V("ly")||0)/1200;if(a&&n){const m=r?a*r/(1-Math.pow(1+r,-n)):a/n;$("lr").textContent=`Aylık taksit: ${F(m)} · Toplam geri ödeme: ${F(m*n)} · Toplam faiz: ${F(m*n-a)} (vergi/masraf hariç)`}}});
 init();
